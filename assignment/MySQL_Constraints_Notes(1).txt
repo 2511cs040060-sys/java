@@ -1,0 +1,514 @@
+MySQL Notes – Constraints and Operations
+
+1. USE Database
+
+Command:
+
+    USE class;
+
+Output:
+
+    Database changed
+
+Why? Switches to the class database. All new tables will be created in
+this database.
+
+------------------------------------------------------------------------
+
+2. Create Table with DEFAULT
+
+Command:
+
+    CREATE TABLE orders(
+        id INT,
+        status VARCHAR(20) DEFAULT 'PENDING',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+Output:
+
+    Query OK, 0 rows affected
+
+Why? Creates the table. If status is not given, PENDING is stored. If
+created_at is not given, the current date and time are stored
+automatically.
+
+------------------------------------------------------------------------
+
+3. View Table
+
+    SELECT * FROM orders;
+
+Output:
+
+    Empty set
+
+Why? The table is empty because no records have been inserted.
+
+------------------------------------------------------------------------
+
+4. Show Databases
+
+    SHOW DATABASES;
+
+Output:
+
+    information_schema
+    mysql
+    performance_schema
+    sys
+    class
+
+Why? Displays all databases available in MySQL.
+
+------------------------------------------------------------------------
+
+5. Insert Record
+
+    INSERT INTO orders(id,status)
+    VALUES(1,'success');
+
+Output:
+
+    Query OK, 1 row affected
+
+Why? One row is inserted. created_at is filled automatically.
+
+------------------------------------------------------------------------
+
+6. View Records
+
+    SELECT * FROM orders;
+
+Output:
+
+    +----+---------+---------------------+
+    | id | status  | created_at          |
+    +----+---------+---------------------+
+    | 1  | success | Current Timestamp   |
+    +----+---------+---------------------+
+
+Why? Shows the inserted record.
+
+------------------------------------------------------------------------
+
+7. Insert Only ID
+
+    INSERT INTO orders(id)
+    VALUES(2);
+
+Output:
+
+    Query OK, 1 row affected
+
+Why? status becomes PENDING and created_at stores the current timestamp
+automatically.
+
+------------------------------------------------------------------------
+
+8. Insert Another Record
+
+    INSERT INTO orders(id,status)
+    VALUES(3,'completed');
+
+Output:
+
+    Query OK, 1 row affected
+
+Why? A new record is inserted successfully.
+
+------------------------------------------------------------------------
+
+DEFAULT Operations
+
+    INSERT INTO orders VALUES(4,DEFAULT,DEFAULT);
+
+Output:
+
+    Query OK, 1 row affected
+
+Why? DEFAULT keyword inserts default values.
+
+    INSERT INTO orders(id,status)
+    VALUES(5,NULL);
+
+Output:
+
+    Query OK, 1 row affected
+
+Why? NULL is stored because NULL was explicitly provided.
+
+------------------------------------------------------------------------
+
+Composite Primary Key
+
+    CREATE TABLE students(
+     id INT,
+     course_id INT,
+     PRIMARY KEY(id,course_id)
+    );
+
+Output:
+
+    Query OK, 0 rows affected
+
+Why? The combination of id and course_id must always be unique.
+
+    INSERT INTO students VALUES(1,1);
+
+Output:
+
+    Query OK, 1 row affected
+
+    INSERT INTO students VALUES(1,3);
+
+Output:
+
+    Query OK, 1 row affected
+
+Why? The combinations are different.
+
+    INSERT INTO students VALUES(1,NULL);
+
+Output:
+
+    ERROR 1048: Column 'course_id' cannot be null
+
+Why? Primary key columns cannot contain NULL.
+
+    INSERT INTO students VALUES(1,1);
+
+Output:
+
+    ERROR 1062: Duplicate entry
+
+Why? Duplicate primary key values are not allowed.
+
+------------------------------------------------------------------------
+
+UNIQUE Constraint
+
+    CREATE TABLE students2(
+     id INT UNIQUE
+    );
+
+Output:
+
+    Query OK, 0 rows affected
+
+    INSERT INTO students2 VALUES(1);
+
+Output:
+
+    Query OK, 1 row affected
+
+    INSERT INTO students2 VALUES(1);
+
+Output:
+
+    ERROR 1062: Duplicate entry
+
+Why? UNIQUE columns cannot contain duplicate values.
+
+    INSERT INTO students2 VALUES(NULL);
+
+Output:
+
+    Query OK, 1 row affected
+
+Why? UNIQUE allows NULL values.
+
+------------------------------------------------------------------------
+
+Foreign Key
+
+    CREATE TABLE customers(
+     id INT PRIMARY KEY,
+     email VARCHAR(100),
+     phone INT
+    );
+
+    CREATE TABLE orders1(
+     order_id INT PRIMARY KEY,
+     customer_id INT,
+     FOREIGN KEY(customer_id) REFERENCES customers(id)
+    );
+
+Output:
+
+    Query OK, 0 rows affected
+
+Why? customer_id must exist in the customers table.
+
+    INSERT INTO customers(id,email)
+    VALUES(1,'shiva@gmail.com');
+
+Output:
+
+    Query OK, 1 row affected
+
+    INSERT INTO orders1(order_id,customer_id)
+    VALUES(100,1);
+
+Output:
+
+    Query OK, 1 row affected
+
+    INSERT INTO orders1(order_id,customer_id)
+    VALUES(101,5);
+
+Output:
+
+    ERROR 1452: Cannot add or update a child row
+
+Why? Customer ID 5 does not exist.
+
+------------------------------------------------------------------------
+
+CHECK Constraint
+
+    CREATE TABLE employees(
+     id INT,
+     age INT CHECK(age>=18 AND age<=65),
+     salary DECIMAL(10,2) CHECK(salary>0)
+    );
+
+Output:
+
+    Query OK, 0 rows affected
+
+    INSERT INTO employees VALUES(1,25,30000);
+
+Output:
+
+    Query OK, 1 row affected
+
+    INSERT INTO employees VALUES(2,15,30000);
+
+Output:
+
+    ERROR: Check constraint failed
+
+Why? Age is less than 18.
+
+    INSERT INTO employees VALUES(3,30,-100);
+
+Output:
+
+    ERROR: Check constraint failed
+
+Why? Salary must be greater than zero.
+
+------------------------------------------------------------------------
+
+AUTO_INCREMENT
+
+    CREATE TABLE voters(
+     id INT AUTO_INCREMENT PRIMARY KEY,
+     name VARCHAR(10),
+     age INT CHECK(age>=18)
+    );
+
+Output:
+
+    Query OK, 0 rows affected
+
+    INSERT INTO voters(id,name,age)
+    VALUES(1,'GK',12);
+
+Output:
+
+    ERROR: Check constraint failed
+
+    INSERT INTO voters(id,name,age)
+    VALUES(2,'SR',18);
+
+Output:
+
+    Query OK, 1 row affected
+
+    INSERT INTO voters(name,age)
+    VALUES('RS',23);
+
+Output:
+
+    Query OK, 1 row affected
+
+Why? id is generated automatically.
+
+    DELETE FROM voters WHERE id=3;
+    INSERT INTO voters(name,age)
+    VALUES('BB',25);
+
+Output:
+
+    Query OK
+
+Why? AUTO_INCREMENT does not reuse deleted IDs.
+
+------------------------------------------------------------------------
+
+Alias
+
+    SELECT id AS 'voter_id',
+           name AS 'voters_name'
+    FROM voters;
+
+Output:
+
+    +----------+-------------+
+    | voter_id | voters_name |
+    +----------+-------------+
+
+Why? Alias changes only the displayed column name.
+
+    SELECT v.id,v.name
+    FROM voters AS v;
+
+Output:
+
+    Query executed successfully.
+
+Why? The table gets a temporary name for that query.
+
+    SELECT age+5 AS future_age
+    FROM voters;
+
+Output:
+
+    +------------+
+    | future_age |
+    +------------+
+
+Why? Alias can also be used for calculated columns.
+
+-- Create a new database
+CREATE DATABASE college;
+
+-- Select the database
+USE college;
+
+-- Show all tables in the current database
+SHOW TABLES;
+
+-- Create a table
+CREATE TABLE students(
+    id INT,
+    name VARCHAR(50),
+    marks INT
+);
+
+-- Describe table structure
+DESC students;
+
+-- Insert a record
+INSERT INTO students
+VALUES(1,'Shiva',95);
+
+-- Display all records
+SELECT * FROM students;
+
+-- Update a single column
+UPDATE students
+SET marks = 98
+WHERE id = 1;
+
+-- Update multiple columns
+UPDATE students
+SET name = 'Shiva Teja',
+    marks = 99
+WHERE id = 1;
+
+-- Delete a specific row
+DELETE FROM students
+WHERE id = 1;
+
+-- Delete rows with a condition
+DELETE FROM students
+WHERE marks < 35;
+
+-- Delete rows with multiple conditions
+DELETE FROM students
+WHERE marks < 35
+AND name = 'Ravi';
+
+-- Delete all rows (table remains)
+DELETE FROM students;
+
+-- Add a new column
+ALTER TABLE students
+ADD email VARCHAR(100);
+
+-- Modify a column datatype
+ALTER TABLE students
+MODIFY email VARCHAR(150);
+
+-- Drop a column
+ALTER TABLE students
+DROP COLUMN email;
+
+-- Remove all rows (table structure remains)
+TRUNCATE TABLE students;
+
+-- Delete the table completely
+DROP TABLE students;
+
+-- Delete the database completely
+DROP DATABASE college;
+
+============================================================
+
+-- Difference between DELETE, TRUNCATE and DROP
+
+-- DELETE
+-- Removes specific rows or all rows.
+-- Table structure remains.
+DELETE FROM students WHERE id = 5;
+
+-- TRUNCATE
+-- Removes all rows.
+-- Table structure remains.
+TRUNCATE TABLE students;
+
+-- DROP
+-- Removes the complete table (data + structure).
+DROP TABLE students;
+
+============================================================
+
+-- More DELETE Examples
+
+-- Delete all rows
+DELETE FROM students;
+
+-- Delete one row
+DELETE FROM students
+WHERE id = 5;
+
+-- Delete rows with condition
+DELETE FROM students
+WHERE marks < 35;
+
+-- Delete rows with multiple conditions
+DELETE FROM students
+WHERE marks < 35
+AND name = 'Ravi';
+
+============================================================
+
+-- More UPDATE Examples
+
+-- Update one column
+UPDATE students
+SET marks = 90
+WHERE id = 2;
+
+-- Update multiple columns
+UPDATE students
+SET name = 'Rahul',
+    marks = 85
+WHERE id = 2;
+
+-- Update all rows
+UPDATE students
+SET marks = marks + 5;
